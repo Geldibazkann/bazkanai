@@ -1,0 +1,25 @@
+*{
+  padding:0;
+margin: 0;
+text-decoration: none;
+box-sizing: border-box;
+}
+.chat-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+#chat-messages {
+  height: 400px;
+  overflow-y: scroll;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+a{
+  color: #212121;
+  display: flex;
+  justify-content: center;
+  font-size: 2.5rem;
+  
+}

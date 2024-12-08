@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gemini AI Chatbot</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #f4f4f4;
+      }
+      #chat-container {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        height: 400px;
+        overflow-y: scroll;
+        padding: 15px;
+        margin-bottom: 20px;
+      }
+      .message {
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 5px;
+        max-width: 80%;
+      }
+      .user-message {
+        background-color: #e6f2ff;
+        align-self: flex-end;
+        margin-left: auto;
+        text-align: right;
+      }
+      .ai-message {
+        background-color: #f0f0f0;
+        align-self: flex-start;
+      }
+      #input-container {
+        display: flex;
+        gap: 10px;
+      }
+      #user-input {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      #send-button {
+        padding: 10px 15px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <a href="#">Bazkan AI</a>
+    <div id="chat-container"></div>
+    <div id="input-container">
+      <input type="text" id="user-input" placeholder="Mesajınızı yazın..." />
+      <button id="send-button">Göndər</button>
+    </div>
+
+    <script type="module">
+      import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+      class GeminiChatbot {
+        constructor() {
+          // API anahtarınızı buraya yazın
+          const API_KEY = "AIzaSyAsCZ6BzMOAoRYyvnIpW1Pcr4dacl7v_Lo";
+          this.genAI = new GoogleGenerativeAI(API_KEY);
+
+          this.chatContainer = document.getElementById("chat-container");
+          this.userInput = document.getElementById("user-input");
+          this.sendButton = document.getElementById("send-button");
+
+          this.sendButton.addEventListener("click", () => this.gonderMesaj());
+          this.userInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") this.gonderMesaj();
+          });
+
+          // Sohbet geçmişini tutacak dizi
+          this.chatHistory = [];
+        }
+
+        mesajEkle(mesaj, tip) {
+          const mesajElement = document.createElement("div");
+          mesajElement.textContent = mesaj;
+          mesajElement.classList.add("message", tip);
+          this.chatContainer.appendChild(mesajElement);
+          this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+        }
+
+        async geminiCevapAl(mesaj) {
+          try {
+            // Model oluştur
+            const model = this.genAI.getGenerativeModel({
+              model: "gemini-pro",
+              safetySettings: [
+                {
+                  category: "HARM_CATEGORY_HARASSMENT",
+                  threshold: "BLOCK_NONE",
+                },
+              ],
+            });
+
+            // Sohbet geçmişini ekle
+            const chat = model.startChat({
+              history: this.chatHistory,
+            });
+
+            // Cevap al
+            const result = await chat.sendMessage(mesaj);
+            const response = await result.response;
+            const text = response.text();
+
+            // Sohbet geçmişine ekle
+            this.chatHistory.push(
+              { role: "user", parts: [{ text: mesaj }] },
+              { role: "model", parts: [{ text: text }] }
+            );
+
+            return text;
+          } catch (error) {
+            console.error("API Hatası:", error);
+            return "Şu anda bir sorun var. Daha sonra tekrar deneyin.";
+          }
+        }
+
+        async gonderMesaj() {
+          const mesaj = this.userInput.value.trim();
+          if (mesaj === "") return;
+
+          // Kullanıcı mesajını göster
+          this.mesajEkle(mesaj, "user-message");
+
+          // Input'u temizle
+          this.userInput.value = "";
+
+          // AI'dan cevap al
+          const aiCevap = await this.geminiCevapAl(mesaj);
+
+          // AI cevabını göster
+          this.mesajEkle(aiCevap, "ai-message");
+        }
+      }
+
+      // Chatbot'u başlat
+      const chatbot = new GeminiChatbot();
+    </script>
+    <script async src="https://esm.run/@google/generative-ai"></script>
+  </body>
+</html>
